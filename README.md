@@ -1,140 +1,444 @@
-# 🎧 Persian Rap Recommendation System
+# Persian Rap Recommendation System
 
-A machine learning–based recommendation system designed to suggest **Persian rap songs** based on similarity and user preferences. This project explores how data-driven approaches can be applied to music recommendation in a niche genre.
+A music recommendation system for Persian rap tracks, built with Python and Django REST Framework.
 
----
-
-## 📌 Overview
-
-This project builds a recommendation engine that analyzes Persian rap tracks and suggests similar songs. It leverages techniques from **data science**, **natural language processing**, and **recommender systems** to capture relationships between songs and artists.
-
-Recommendation systems are widely used to help users discover relevant content efficiently by modeling similarity and user behavior ([arXiv][1]).
+The project analyzes extracted audio and embedding features from Persian rap songs, then recommends similar tracks based on distance between song-level representations.
 
 ---
 
-## 🚀 Features
+## Overview
 
-* 🎵 Recommend similar Persian rap songs
-* 🧠 Content-based filtering approach
-* 📊 Data preprocessing and feature extraction
-* 🔍 Similarity computation between tracks
-* 📁 Clean and modular implementation
+**Persian Rap Recommendation System** is designed to help users discover similar Persian rap songs by comparing feature representations of tracks.
 
----
+The system uses precomputed CSV datasets containing beat-level audio features and song-level embedding coordinates, then exposes recommendation results through API endpoints.
 
-## 🛠️ Tech Stack
+The backend provides endpoints for:
 
-* Python
-* Pandas / NumPy
-* Scikit-learn
-* Jupyter Notebook
+- Listing available songs
+- Fetching details for a selected song
+- Returning the top recommended similar tracks
+- Returning beat-level feature data for visualization or analysis
 
 ---
 
-## 📂 Project Structure
+## Features
 
+- Persian rap song recommendation
+- Song similarity search using embedding distance
+- Beat-level feature retrieval for selected tracks
+- REST API built with Django REST Framework
+- CSV-based data pipeline
+- Simple and extensible project structure
+- Support for frontend or dashboard integration
+
+---
+
+## Tech Stack
+
+- Python
+- Django
+- Django REST Framework
+- Pandas
+- NumPy
+- SQLite
+- django-cors-headers
+
+---
+
+## Recommendation Method
+
+The recommendation logic is based on song-level embedding coordinates stored in `ensc_results.csv`.
+
+For a selected song, the system:
+
+1. Finds the selected song by `artist` and `title`
+2. Reads its embedding coordinates: `ensc_x` and `ensc_y`
+3. Computes Euclidean distance between the selected song and all other songs
+4. Sorts songs by distance
+5. Returns the top 3 most similar tracks, excluding the selected song itself
+
+---
+
+## Dataset Files
+
+The project expects the following CSV files:
+
+```text
+music_beat_sync_features.csv
+ensc_results.csv
 ```
+
+### `music_beat_sync_features.csv`
+
+Contains beat-level audio features for each song. The backend uses this file to return detailed per-beat data for a selected track.
+
+Expected fields include:
+
+```text
+artist
+title
+beat_index
+rms
+zcr
+mfcc_1
+...
+```
+
+### `ensc_results.csv`
+
+Contains song-level embedding coordinates used for recommendation.
+
+Expected fields:
+
+```text
+artist
+title
+ensc_x
+ensc_y
+```
+
+Example:
+
+```csv
+artist,title,ensc_x,ensc_y
+hichkas,ekhtelaf,-0.00289729917283443,0.000083749776252772
+bahram,Beshno,0.000059872633909127825,0.000050027743951834335
+```
+
+---
+
+## Project Structure
+
+```text
 Persian_Rap_Recommendation_system/
 │
-├── data/                # Dataset files
-├── notebooks/           # Jupyter notebooks for experiments
-├── src/                 # Core implementation (if applicable)
-├── models/              # Trained models (if included)
-├── README.md
-└── requirements.txt
+├── backend/
+│   ├── backend/
+│   │   ├── settings.py
+│   │   ├── urls.py
+│   │   ├── asgi.py
+│   │   └── wsgi.py
+│   │
+│   ├── musicapp/
+│   │   ├── analysis_utils.py
+│   │   ├── models.py
+│   │   ├── serializers.py
+│   │   ├── urls.py
+│   │   └── views.py
+│   │
+│   └── manage.py
+│
+├── music_beat_sync_features.csv
+├── ensc_results.csv
+├── .gitignore
+└── README.md
 ```
 
 ---
 
-## ⚙️ How It Works
+## API Endpoints
 
-1. **Data Collection**
+Base path:
 
-   * Persian rap songs dataset (e.g., song titles, artists, lyrics, or metadata)
+```text
+/api/music/
+```
 
-2. **Preprocessing**
+### Get All Songs
 
-   * Cleaning text data
-   * Feature extraction (e.g., TF-IDF or embeddings)
+```http
+GET /api/music/songs/
+```
 
-3. **Similarity Calculation**
+Returns the list of available songs.
 
-   * Compute similarity between songs using cosine similarity or similar methods
+Example response:
 
-4. **Recommendation**
+```json
+[
+  {
+    "artist": "hichkas",
+    "title": "ekhtelaf"
+  },
+  {
+    "artist": "bahram",
+    "title": "Beshno"
+  }
+]
+```
 
-   * Given a song, return the most similar tracks
+### Get Song Details and Recommendations
+
+```http
+GET /api/music/song-detail/?artist=<artist>&title=<title>
+```
+
+Example request:
+
+```http
+GET /api/music/song-detail/?artist=hichkas&title=ekhtelaf
+```
+
+Example response:
+
+```json
+{
+  "artist": "hichkas",
+  "title": "ekhtelaf",
+  "recommended": [
+    {
+      "artist": "pishro",
+      "title": "Kalafegi"
+    },
+    {
+      "artist": "bahram",
+      "title": "Daagh"
+    },
+    {
+      "artist": "sorena",
+      "title": "Teryagh"
+    }
+  ],
+  "beat_data": [
+    {
+      "artist": "hichkas",
+      "title": "ekhtelaf",
+      "beat_index": 0,
+      "rms": 0.12,
+      "zcr": 0.04,
+      "mfcc_1": -83.5
+    }
+  ]
+}
+```
 
 ---
 
-## ▶️ Usage
+## Installation
 
-### 1. Clone the repository
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/Eshahi/Persian_Rap_Recommendation_system.git
 cd Persian_Rap_Recommendation_system
 ```
 
-### 2. Install dependencies
+### 2. Create a Virtual Environment
+
+```bash
+python -m venv venv
+```
+
+Activate it:
+
+```bash
+# macOS / Linux
+source venv/bin/activate
+```
+
+```bash
+# Windows
+venv\Scripts\activate
+```
+
+### 3. Install Dependencies
+
+If the project includes a `requirements.txt` file:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 3. Run the notebook or script
+Otherwise, install the required packages manually:
 
 ```bash
-jupyter notebook
+pip install django djangorestframework django-cors-headers pandas numpy
+```
+
+### 4. Move into the Backend Directory
+
+```bash
+cd backend
+```
+
+### 5. Run Database Migrations
+
+```bash
+python manage.py migrate
+```
+
+### 6. Start the Development Server
+
+```bash
+python manage.py runserver
+```
+
+The backend should now be available at:
+
+```text
+http://127.0.0.1:8000/
 ```
 
 ---
 
-## 💡 Example
+## Usage
+
+After starting the Django server, test the API in your browser or with `curl`.
+
+### List Songs
+
+```bash
+curl http://127.0.0.1:8000/api/music/songs/
+```
+
+### Get Recommendations
+
+```bash
+curl "http://127.0.0.1:8000/api/music/song-detail/?artist=hichkas&title=ekhtelaf"
+```
+
+---
+
+## Example Python Usage
 
 ```python
-recommend("Hichkas - Ekhtelaf")
+import requests
+
+artist = "hichkas"
+title = "ekhtelaf"
+
+url = "http://127.0.0.1:8000/api/music/song-detail/"
+params = {
+    "artist": artist,
+    "title": title
+}
+
+response = requests.get(url, params=params)
+data = response.json()
+
+print("Selected song:", data["artist"], "-", data["title"])
+
+print("\nRecommended songs:")
+for song in data["recommended"]:
+    print(f"- {song['artist']} - {song['title']}")
 ```
 
-**Output:**
+---
 
+## Core Logic
+
+The main recommendation functions are located in:
+
+```text
+backend/musicapp/analysis_utils.py
 ```
-- Song A
-- Song B
-- Song C
+
+Important functions:
+
+```python
+list_songs()
 ```
 
----
+Returns all available songs from the beat-level feature dataset.
 
-## 📈 Future Improvements
+```python
+get_beat_data(artist, title)
+```
 
-* Add collaborative filtering
-* Incorporate user listening history
-* Improve feature extraction using deep learning
-* Deploy as a web app or API
+Returns beat-level feature rows for a selected song.
 
----
+```python
+find_top_3_similar(cur_artist, cur_title)
+```
 
-## 🤝 Contributing
-
-Contributions are welcome! Feel free to fork the repo and submit a pull request.
-
----
-
-## 📜 License
-
-This project is open-source and available under the MIT License.
+Finds the top 3 most similar songs based on distance between `ensc_x` and `ensc_y` coordinates.
 
 ---
 
-## 🙌 Acknowledgments
+## CORS Configuration
 
-* Persian rap community
-* Open-source ML libraries
-* Inspiration from modern recommender systems research
+The backend is configured to allow requests from:
+
+```text
+http://localhost:3000
+```
+
+This makes it suitable for use with a local frontend application, such as React, Next.js, or another dashboard interface.
 
 ---
 
-If you want, I can tailor this README **exactly to the repo’s actual files (line-by-line accurate)**—just tell me and I’ll refine it further.
+## Notes
 
-[1]: https://arxiv.org/abs/2004.06059?utm_source=chatgpt.com "paper2repo: GitHub Repository Recommendation for Academic Papers"
+- Audio files are not necessarily included in the repository.
+- Large music files should not be committed to GitHub.
+- Keep local music folders, virtual environments, and generated files out of version control.
+- The current recommendation method uses precomputed embeddings. Improving embedding quality will directly improve recommendation quality.
+
+---
+
+## Future Improvements
+
+- Add a frontend interface for browsing songs and recommendations
+- Add user-based recommendation history
+- Support collaborative filtering
+- Improve audio feature extraction
+- Add lyric-based similarity using NLP
+- Add search and filtering by artist
+- Add Docker support
+- Add automated tests for API endpoints
+- Add deployment instructions
+- Add a proper `requirements.txt`
+- Add model/data documentation
+
+---
+
+## Contributing
+
+Contributions are welcome.
+
+To contribute:
+
+1. Fork the repository
+2. Create a new branch
+
+```bash
+git checkout -b feature/your-feature-name
+```
+
+3. Make your changes
+4. Commit your work
+
+```bash
+git commit -m "Add your feature"
+```
+
+5. Push to your branch
+
+```bash
+git push origin feature/your-feature-name
+```
+
+6. Open a pull request
+
+---
+
+## License
+
+No license file is currently specified in the repository.
+
+If you plan to make this project open source, add a license such as MIT, Apache-2.0, or GPL depending on your intended usage.
+
+---
+
+## Author
+
+Developed by [Eshahi](https://github.com/Eshahi).
+
+---
+
+## Acknowledgments
+
+- Persian rap artists and music community
+- Open-source Python ecosystem
+- Django and Django REST Framework
+- Pandas and NumPy for data processing
